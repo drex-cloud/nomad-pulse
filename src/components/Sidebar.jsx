@@ -15,15 +15,17 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // --- WEATHER ICON LOGIC ---
   const getWeatherIcon = (condition) => {
     const map = { Clear: "☀️", Clouds: "☁️", Rain: "🌧️", Thunderstorm: "⛈️", Snow: "❄️", Mist: "🌫️", Haze: "🌫️" };
     return map[condition] || "🛰️";
   };
 
-  // --- DATA FETCHING ---
   useEffect(() => {
     if (!countryName) return;
+
+    // Using Env Variables for Security
+    const WEATHER_KEY = import.meta.env.VITE_WEATHER_API_KEY;
+
     const getPulseData = async () => {
       setLoading(true);
       try {
@@ -33,16 +35,15 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
 
         if (country.capitalInfo?.latlng) {
           const [lat, lon] = country.capitalInfo.latlng;
-          const wRes = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4c9fcbbdbff6343d0a002a52050aa07c&units=metric`);
+          const wRes = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric`);
           setWeather(wRes.data);
 
-          // Update Time
           const utc = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
           const nd = new Date(utc + (1000 * wRes.data.timezone));
           setLocalTime(nd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
         }
       } catch (err) {
-        console.error("API Fetch Error");
+        console.error("Uplink Error");
       } finally { setLoading(false); }
     };
     getPulseData();
@@ -73,8 +74,8 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
       }}
       className="crt-overlay"
     >
-      {/* HEADER: SECTOR STATUS & TIME */}
-      <div style={{ padding: '20px', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', justifyContent: 'space-between', background: 'rgba(16,185,129,0.08)' }}>
+      {/* HEADER */}
+      <div style={{ padding: '20px', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', display: 'flex', justifyContent: 'space-between', background: 'rgba(16, 185, 129, 0.08)' }}>
         <div style={{ textAlign: 'left' }}>
           <p style={{ margin: 0, fontSize: '10px', color: '#10b981', fontWeight: 'bold', letterSpacing: '4px' }}>SECTOR_LOCKED</p>
           <p style={{ margin: 0, fontSize: '18px', fontWeight: '900', fontFamily: 'monospace', color: '#10b981' }}>{localTime || "00:00:00"}</p>
@@ -82,7 +83,6 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
         <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: '50%', width: '35px', height: '35px', cursor: 'pointer' }}>✕</button>
       </div>
 
-      {/* SCROLLABLE CONTENT */}
       <div style={{ padding: '25px', overflowY: 'auto', textAlign: 'left' }} className="custom-scrollbar">
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center' }}>
@@ -91,17 +91,15 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
         ) : data ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-            {/* IDENTITY CARD */}
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              <img src={data.flags.svg} style={{ width: '100px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 5px 15px rgba(0,0,0,0.5)' }} alt="flag" />
+              <img src={data.flags.svg} style={{ width: '100px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }} alt="flag" />
               <div style={{ flex: 1 }}>
                 <h2 style={{ margin: 0, fontSize: isMobile ? '28px' : '42px', fontStyle: 'italic', fontWeight: '900', letterSpacing: '-2px', lineHeight: 0.9 }}>{data.name.common}</h2>
-                <p style={{ fontSize: '10px', color: '#10b981', fontWeight: 'bold', marginTop: '5px' }}>{data.region.toUpperCase()} / {data.cca3}</p>
+                <p style={{ fontSize: '10px', color: '#10b981', fontWeight: 'bold' }}>{data.region.toUpperCase()} / {data.cca3}</p>
               </div>
             </div>
 
-            {/* ATMOSPHERE HUD WITH ICON */}
-            <div style={{ padding: '20px', background: 'linear-gradient(145deg, rgba(255,255,255,0.05), transparent)', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.08)', position: 'relative' }}>
+            <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
               <div style={{ position: 'absolute', top: '20px', right: '25px', fontSize: '50px' }}>
                 {weather ? getWeatherIcon(weather.weather[0].main) : "🛰️"}
               </div>
@@ -114,7 +112,6 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
               )}
             </div>
 
-            {/* WARP TELEMETRY */}
             <div style={{ padding: '20px', background: 'rgba(16,185,129,0.12)', border: '1px solid #10b981', borderRadius: '25px' }}>
               <p style={{ fontSize: '10px', color: '#10b981', margin: '0 0 10px 0', fontWeight: 'bold' }}>WARP_TELEMETRY</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -125,7 +122,6 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
               </div>
             </div>
 
-            {/* LIVE SYSTEM LOGS (The Scrollable Timeline) */}
             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <p style={{ fontSize: '9px', opacity: 0.5, marginBottom: '10px', fontWeight: 'bold' }}>SYSTEM_LOGS</p>
               <div style={{ fontSize: '10px', fontFamily: 'monospace', display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -133,15 +129,11 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
                   <span style={{ color: '#10b981' }}>[{localTime}]</span> UPLINK_ESTABLISHED
                 </div>
                 <div style={{ borderLeft: '2px solid #10b981', paddingLeft: '10px' }}>
-                  <span style={{ color: '#10b981' }}>[{localTime}]</span> GEOGRAPHIC_SCAN_COMPLETE
-                </div>
-                <div style={{ borderLeft: '2px solid #10b981', paddingLeft: '10px' }}>
-                  <span style={{ color: '#10b981' }}>[{localTime}]</span> {data.currencies ? Object.values(data.currencies)[0].name : "CURRENCY"} IDENTIFIED
+                  <span style={{ color: '#10b981' }}>[{localTime}]</span> {data.name.common.toUpperCase()}_SYNC_COMPLETE
                 </div>
               </div>
             </div>
 
-            {/* TECH GRID */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <div style={{ background: 'rgba(255,255,255,0.04)', padding: '15px', borderRadius: '18px' }}>
                 <p style={{ fontSize: '9px', opacity: 0.4, margin: 0 }}>POPULATION</p>
@@ -152,7 +144,6 @@ const Sidebar = ({ countryName, prevCountryName, warpDistance, onClose }) => {
                 <p style={{ margin: '5px 0 0 0', fontWeight: '900', fontSize: '14px', color: '#10b981' }}>{Object.values(data.languages || {})[0]}</p>
               </div>
             </div>
-
           </div>
         ) : null}
       </div>

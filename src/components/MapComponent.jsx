@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import Map from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZGFuaWVsbXdvbmdlbGEiLCJhIjoiY21qaWRsbmk0MGwyYjNmc2xxMnk0bGczNCJ9.ll_48iPrGJtyWinFb3FlGg';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const MapComponent = ({ setSelectedCountry }) => {
   const mapRef = useRef();
